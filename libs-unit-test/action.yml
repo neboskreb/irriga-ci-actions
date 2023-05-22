@@ -1,0 +1,53 @@
+name: Library unit test
+description: Build and test internal Library
+inputs:
+  working-directory:
+    required: true
+    description: Which library to build
+  artifact:
+    required: true
+    description: Which executable contains the tests
+
+inputs:
+  working-directory:
+    required: true
+  artifact:
+    required: true
+
+
+runs:
+    using: 'composite'
+
+    defaults:
+      run:
+        working-directory: ${{inputs.working-directory}}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: set up Conan
+      uses: turtlebrowser/get-conan@main
+
+    - name: set up Conan profile
+      run: conan profile detect
+
+    - name: Conan install
+      run: conan install . --output-folder build --build=missing
+
+    - name: CMake install
+      run: cmake -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" . -B cmake-build-release
+
+    - name: CMake build
+      run: cmake  --build ./cmake-build-release
+
+    - name: Run tests
+      run: ./cmake-build-release/${{inputs.artifact}} --gtest_output="xml:./cmake-build-release/gtest-report.xml"
+      continue-on-error: true
+
+    - name: Publish Test Report
+      # Now collect the results and report the failures, if present
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always() # always run even if the previous step fails
+      with:
+        files: '**/gtest-report.xml'
