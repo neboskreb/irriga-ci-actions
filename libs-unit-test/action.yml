@@ -4,46 +4,41 @@ inputs:
   working-directory:
     required: true
     description: Which library to build
-  artifact:
-    required: true
-    description: Which executable contains the tests
-
-inputs:
-  working-directory:
-    required: true
-  artifact:
-    required: true
-
 
 runs:
     using: 'composite'
-
-    defaults:
-      run:
-        working-directory: ${{inputs.working-directory}}
-
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
+    - name: Detect CMake and Conan scripts
+      run: |
+        chmod +x ${{github.action_path}}/detect-executable.sh
+        ${{github.action_path}}/detect-executable.sh ${{inputs.working-directory}} >> "$GITHUB_ENV"
+      shell: bash
 
-    - name: set up Conan
-      uses: turtlebrowser/get-conan@main
-
-    - name: set up Conan profile
-      run: conan profile detect
+    - name: Assert info detected
+      if: ${{env.cmake_found != 'True' || env.conan_found != 'True' || env.executable == ''}}
+      uses: actions/github-script@v3
+      with:
+        script: core.setFailed('Executable not detected in CMakeLists.txt, or CMakeLists.txt is missing, or conanfile is missing')
 
     - name: Conan install
       run: conan install . --output-folder build --build=missing
+      working-directory: ${{inputs.working-directory}}
+      shell: bash
 
     - name: CMake install
       run: cmake -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" . -B cmake-build-release
+      working-directory: ${{inputs.working-directory}}
+      shell: bash
 
     - name: CMake build
       run: cmake  --build ./cmake-build-release
+      working-directory: ${{inputs.working-directory}}
+      shell: bash
 
     - name: Run tests
-      run: ./cmake-build-release/${{inputs.artifact}} --gtest_output="xml:./cmake-build-release/gtest-report.xml"
-      continue-on-error: true
+      run: ./cmake-build-release/${{env.executable}} --gtest_output="xml:./cmake-build-release/gtest-report.xml"
+      working-directory: ${{inputs.working-directory}}
+      shell: bash
 
     - name: Publish Test Report
       # Now collect the results and report the failures, if present

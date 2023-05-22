@@ -1,0 +1,30 @@
+name: Conan create upload
+description: Build the library with GitHub profile and upload it to Neboskreb remote so it can be pulled for later builds
+inputs:
+  working-directory:
+    required: true
+    description: Which library to build
+
+runs:
+    using: 'composite'
+    steps:
+    - name: Detect CMake and Conan scripts
+      run: |
+        chmod +x ${{github.action_path}}/detect-library.sh
+        ${{github.action_path}}/detect-library.sh ${{inputs.working-directory}} >> "$GITHUB_ENV"
+      shell: bash
+
+    - name: Assert info detected
+      if: ${{env.cmake_found != 'True' || env.conan_found != 'True' || env.library == ''}}
+      uses: actions/github-script@v3
+      with:
+        script: core.setFailed('Library not detected in conanfile, or CMakeLists.txt is missing, or conanfile is missing')
+
+    - name: Conan create
+      run: conan create .
+      working-directory: ${{inputs.working-directory}}
+      shell: bash
+
+    - name: Conan upload
+      run: conan upload ${{env.library}} -r neboskreb-conan --force
+      shell: bash

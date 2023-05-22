@@ -1,0 +1,23 @@
+name: Library unit test
+description: Build and test internal Library
+inputs:
+  conan-password:
+    required: true
+    description: Password for Conan remote
+
+runs:
+    using: 'composite'
+    steps:
+    - name: set up Conan
+      uses: turtlebrowser/get-conan@main
+
+    - name: add Neboskreb repo to Conan
+      run: |
+        export CONAN_REVISIONS_ENABLED=1
+        conan remote add neboskreb-conan https://neboskreb.jfrog.io/artifactory/api/conan/neboskreb-conan
+        conan remote login -p ${{inputs.conan-password}} neboskreb-conan neboskreb@narod.ru
+      shell: bash
+
+    - name: set up Conan profile
+      run: conan profile detect
+      shell: bash
