@@ -14,7 +14,7 @@ runs:
     - name: add Neboskreb repo to Conan
       run: |
         export CONAN_REVISIONS_ENABLED=1
-        conan remote add neboskreb-conan https://neboskreb.jfrog.io/artifactory/api/conan/neboskreb-conan
+        conan remote add neboskreb-conan https://neboskreb.jfrog.io/artifactory/api/conan/neboskreb-conan --index 0
         conan remote login -p ${{inputs.conan-password}} neboskreb-conan neboskreb@narod.ru
       shell: bash
 
