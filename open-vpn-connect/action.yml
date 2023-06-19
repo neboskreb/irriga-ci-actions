@@ -1,0 +1,72 @@
+name: Connect OpenVPN tunnel
+description: Install OpenVPN and connect the tunnel
+inputs:
+  ca:
+    required: true
+    description: Content of ca.crt file
+  ta:
+    required: true
+    description: Content of ta.key file
+  user-crt:
+    required: true
+    description: Content of user.crt file
+  user-key:
+    required: true
+    description: Content of user.key file
+  user-ovpn:
+    required: true
+    description: Content of user.ovpn file
+  target-ip:
+    required: false
+    description: The internal IP of the VPN server
+    default: 10.0.0.200
+
+runs:
+    using: 'composite'
+    steps:
+    - name: Install OpenVPN
+      run: sudo apt install -y openvpn openvpn-systemd-resolved
+      shell: bash
+
+    - name: Load VPN secrets
+      run: |
+        mkdir vpn
+        echo "${{inputs.ca}}"        > vpn/ca.crt
+        echo "${{inputs.ta}}"        > vpn/ta.key
+        echo "${{inputs.user-crt}}"  > vpn/user.crt
+        echo "${{inputs.user-key}}"  > vpn/user.key
+        echo "${{inputs.user-ovpn}}" > vpn/user.ovpn
+      shell: bash
+
+    - name: Initiate VPN connection
+      run: sudo openvpn --config "user.ovpn" --log "../vpn.log" --daemon
+      working-directory: ./vpn
+      shell: bash
+
+    - name: Wait for a VPN connection
+      run: |
+        chmod +x ${{github.action_path}}/await-connection.sh
+        ${{github.action_path}}/await-connection.sh ${{inputs.target-ip}}
+      shell: bash
+
+    - name: Erase VPN secrets
+      if: always()
+      run: rm -rf vpn
+      shell: bash
+
+    - name: Failure log
+      if: failure()
+      run: sudo cat vpn.log
+      shell: bash
+
+    - name: Abort on failure
+      if: failure()
+      uses: actions/github-script@v3
+      with:
+        script: core.setFailed('Failed to connect to VPN')
+
+    - name: "---- POST-RUN: Close VPN connection"
+      uses: webiny/action-post-run@3.0.0
+      id: post-run-command
+      with:
+        run: sudo killall openvpn
