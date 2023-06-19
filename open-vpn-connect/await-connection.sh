@@ -11,7 +11,7 @@ echo "INFO: Target IP $TARGET_IP" >&2
 
 for (( i=10; ; i-- ))
 do
-  PING_MESSAGE=$(ping -c1 -t1 "$TARGET_IP")
+  PING_MESSAGE=$(ping -c1 -W1 "$TARGET_IP")
   PING_RESULT=$?
   if [ $PING_RESULT -eq 0 ]
   then
