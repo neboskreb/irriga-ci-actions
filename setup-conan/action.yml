@@ -4,6 +4,10 @@ inputs:
   conan-password:
     required: true
     description: Password for Conan remote
+  remote:
+    required: false
+    description: The IP or DNS of the Conan server
+    default: http://10.0.0.200:9300
 
 runs:
     using: 'composite'
@@ -14,7 +18,7 @@ runs:
     - name: add Neboskreb repo to Conan
       run: |
         export CONAN_REVISIONS_ENABLED=1
-        conan remote add neboskreb-conan http://10.0.0.200:9300 --index 0
+        conan remote add neboskreb-conan ${{inputs.remote}} --index 0
         conan remote login -p ${{inputs.conan-password}} neboskreb-conan neboskreb@narod.ru
       shell: bash
 
