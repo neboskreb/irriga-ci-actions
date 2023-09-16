@@ -24,6 +24,10 @@ inputs:
 runs:
     using: 'composite'
     steps:
+    - name: APT update
+      run: sudo apt update
+      shell: bash
+
     - name: Install OpenVPN
       run: sudo apt install -y openvpn openvpn-systemd-resolved
       shell: bash
