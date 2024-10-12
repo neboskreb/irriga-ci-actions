@@ -70,7 +70,7 @@ runs:
         script: core.setFailed('Failed to connect to VPN')
 
     - name: "---- POST-RUN: Close VPN connection"
-      uses: webiny/action-post-run@3.0.0
+      uses: webiny/action-post-run@3.1.0
       id: post-run-command
       with:
         run: sudo killall openvpn
