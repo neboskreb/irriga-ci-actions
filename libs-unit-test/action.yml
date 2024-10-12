@@ -16,7 +16,7 @@ runs:
 
     - name: Assert info detected
       if: ${{env.cmake_found != 'True' || env.conan_found != 'True' || env.executable == ''}}
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
         script: core.setFailed('Executable not detected in CMakeLists.txt, or CMakeLists.txt is missing, or conanfile is missing')
 
