@@ -1,5 +1,5 @@
-name: Library unit test
-description: Build and test internal Library
+name: Configure Conan (requires VPN)
+description: Add remote neboskreb-conan
 inputs:
   conan-password:
     required: true
@@ -12,9 +12,6 @@ inputs:
 runs:
     using: 'composite'
     steps:
-    - name: set up Conan
-      uses: turtlebrowser/get-conan@main
-
     - name: add Neboskreb repo to Conan
       run: |
         export CONAN_REVISIONS_ENABLED=1
