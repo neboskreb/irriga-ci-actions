@@ -22,3 +22,7 @@ runs:
     - name: set up Conan profile
       run: conan profile detect
       shell: bash
+
+    - name: show the configuration
+      run: conan config show "*"
+      shell: bash
