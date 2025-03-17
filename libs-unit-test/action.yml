@@ -4,6 +4,9 @@ inputs:
   working-directory:
     required: true
     description: Which library to build
+  check_name:
+    required: true
+    description: Name which is displayed in test results
 
 runs:
     using: 'composite'
@@ -46,3 +49,4 @@ runs:
       if: always() # always run even if the previous step fails
       with:
         files: '**/gtest-report.xml'
+        check_name: ${{inputs.check_name}}
