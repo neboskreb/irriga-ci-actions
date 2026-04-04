@@ -1,18 +1,6 @@
 name: Connect OpenVPN tunnel
 description: Install OpenVPN and connect the tunnel
 inputs:
-  ca:
-    required: true
-    description: Content of ca.crt file
-  ta:
-    required: true
-    description: Content of ta.key file
-  user-crt:
-    required: true
-    description: Content of user.crt file
-  user-key:
-    required: true
-    description: Content of user.key file
   user-ovpn:
     required: true
     description: Content of user.ovpn file
@@ -35,10 +23,6 @@ runs:
     - name: Load VPN secrets
       run: |
         mkdir vpn
-        echo "${{inputs.ca}}"        > vpn/ca.crt
-        echo "${{inputs.ta}}"        > vpn/ta.key
-        echo "${{inputs.user-crt}}"  > vpn/user.crt
-        echo "${{inputs.user-key}}"  > vpn/user.key
         echo "${{inputs.user-ovpn}}" > vpn/user.ovpn
       shell: bash
 
