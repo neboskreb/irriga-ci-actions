@@ -6,8 +6,12 @@ inputs:
     description: Password for Conan remote
   remote:
     required: false
-    description: The IP or DNS of the Conan server
-    default: http://10.0.0.200:9300
+    description: The IP or DNS of the Conan server (production)
+    default: http://10.8.0.1:9300
+  snapshots:
+    required: false
+    description: The IP or DNS of the Conan server (snapshots)
+    default: http://10.8.0.1:9301
 
 runs:
     using: 'composite'
@@ -17,6 +21,8 @@ runs:
         export CONAN_REVISIONS_ENABLED=1
         conan remote add neboskreb-conan ${{inputs.remote}} --index 0
         conan remote login -p ${{inputs.conan-password}} neboskreb-conan neboskreb@narod.ru
+        conan remote add neboskreb-snapshots ${{inputs.snapshots}} --index 1
+        conan remote login -p ${{inputs.conan-password}} neboskreb-snapshots neboskreb@narod.ru
       shell: bash
 
     - name: set up Conan profile
