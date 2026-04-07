@@ -32,9 +32,25 @@ then
     exit 4
 fi	
 
-echo "INFO: Library name detected in conanfile.py: $LIBRARY" >&2
+# Extract the version information
+VERSION=$(sed -n "s/^.*version.*=.*\"\(.*\)\"/\1/p" conanfile.py)
+if [ ! $VERSION ]
+then
+    echo "FATAL: library version not detected in conanfile.py" >&2
+    exit 5
+fi
+
+echo "INFO: Library detected in conanfile.py: $LIBRARY/$VERSION" >&2
+
+if [[ "$VERSION" == *"-snapshot" ]]; then
+    echo "INFO: Snapshot version is detected" >&2
+    IS_SNAPSHOT=True
+else
+    IS_SNAPSHOT=False
+fi
 
 # Return the results (GitHub picks it up from stdout)
 echo "cmake_found=True"
 echo "conan_found=True"
 echo "library=$LIBRARY"
+echo "is_snapshot=$IS_SNAPSHOT"
