@@ -24,7 +24,18 @@ runs:
         script: core.setFailed('Executable not detected in CMakeLists.txt, or CMakeLists.txt is missing, or conanfile is missing')
 
     - name: Conan install
-      run: conan install . --output-folder build --build=missing
+      run: conan install . --output-folder build --build=missing --format=json > graph.json
+      working-directory: ${{inputs.working-directory}}
+      shell: bash
+
+    - name: Conan upload transient binaries
+      # Extract refs where binary is "build" AND the name does not contain "-snapshot"
+      # Upload only the filtered stable artifacts
+      run: |
+        STABLE_BUILT=$(jq -r '.graph.nodes[] | select(.binary == "build" and (.ref | contains("-snapshot") | not)) | .ref' graph.json)
+        for ref in $STABLE_BUILT; do
+          conan upload "$ref" -r neboskreb-conan --confirm
+        done
       working-directory: ${{inputs.working-directory}}
       shell: bash
 
