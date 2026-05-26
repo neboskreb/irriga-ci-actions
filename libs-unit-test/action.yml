@@ -7,6 +7,10 @@ inputs:
   check_name:
     required: true
     description: Name which is displayed in test results
+  use-cache:
+    required: false
+    default: 'True'
+    description: Enable or disable Conan caching
 
 runs:
     using: 'composite'
@@ -22,6 +26,16 @@ runs:
       uses: actions/github-script@v9
       with:
         script: core.setFailed('Executable not detected in CMakeLists.txt, or CMakeLists.txt is missing, or conanfile is missing')
+
+    - name: Cache Conan packages
+      if: inputs.use-cache == 'True'
+      uses: actions/cache@v4
+      with:
+        path: ~/.conan2/p
+        key: ${{ runner.os }}-conan2-${{ inputs.working-directory }}-${{ hashFiles(format('{0}/conanfile.txt', inputs.working-directory), format('{0}/conanfile.py', inputs.working-directory)) }}
+        restore-keys: |
+          ${{ runner.os }}-conan2-${{ inputs.working-directory }}-
+          ${{ runner.os }}-conan2-
 
     - name: Conan install
       run: conan install . --output-folder build --build=missing --format=json > graph.json
