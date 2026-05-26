@@ -1,0 +1,35 @@
+name: Connect VPN tunnel
+description: Install OpenVPN and connect the tunnel
+inputs:
+  user-ovpn:
+    required: true
+    description: Content of user.ovpn file
+  target-ip:
+    required: false
+    description: The internal IP of the VPN server
+    default: 10.0.0.200
+
+runs:
+    using: 'composite'
+    steps:
+
+    - name: Initiate VPN connection
+      run: openvpn --config <(echo "${{inputs.user-ovpn}}") --log "vpn.log" --daemon
+      shell: bash
+
+    - name: Wait for a VPN connection
+      run: |
+        chmod +x ${{github.action_path}}/await-connection.sh
+        ${{github.action_path}}/await-connection.sh ${{inputs.target-ip}}
+      shell: bash
+
+    - name: Failure log
+      if: failure()
+      run: sudo cat vpn.log
+      shell: bash
+
+    - name: Abort on failure
+      if: failure()
+      uses: actions/github-script@v8
+      with:
+        script: core.setFailed('Failed to connect to VPN')
