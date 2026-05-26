@@ -46,9 +46,13 @@ runs:
       # Extract refs where binary is "build" AND the name does not contain "-snapshot"
       # Upload only the filtered stable artifacts
       run: |
-        STABLE_BUILT=$(jq -r '.graph.nodes[] | select(.binary == "build" and (.ref | contains("-snapshot") | not)) | .ref' graph.json)
+        STABLE_BUILT=$(jq -r '.graph.nodes[] | select(.binary == "Build" and (.ref | contains("-snapshot") | not) and .ref != "conanfile") | .ref' graph.json)
+        echo "=== Selected refs for Upload ==="
+        echo "$STABLE_BUILT"
         for ref in $STABLE_BUILT; do
-          conan upload "$ref" -r neboskreb-conan --confirm
+          if [ -n "$ref" ] && [ "$ref" != "null" ]; then
+            conan upload "$ref" -r neboskreb-conan --confirm
+          fi
         done
       working-directory: ${{inputs.working-directory}}
       shell: bash
