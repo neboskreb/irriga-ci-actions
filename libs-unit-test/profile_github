@@ -1,0 +1,22 @@
+[settings]
+os=Linux
+arch=x86_64
+compiler=gcc
+compiler.version=13
+compiler.libcxx=libstdc++11
+compiler.cppstd=gnu17
+build_type=Release
+
+[conf]
+tools.cmake.cmaketoolchain:generator=Ninja
+
+[options]
+*:shared=False
+*:fPIC=True
+
+[buildenv]
+CFLAGS=-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0
+CXXFLAGS=-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0
+# Prevents ConanCenter packages from using missing GNU C standard libraries
+CC=gcc
+CXX=g++
