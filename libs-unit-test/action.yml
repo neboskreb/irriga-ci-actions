@@ -35,7 +35,6 @@ runs:
         key: ${{ runner.os }}-conan2-${{ inputs.working-directory }}-${{ hashFiles(format('{0}/conanfile.txt', inputs.working-directory), format('{0}/conanfile.py', inputs.working-directory)) }}
         restore-keys: |
           ${{ runner.os }}-conan2-${{ inputs.working-directory }}-
-          ${{ runner.os }}-conan2-
 
     - name: Conan install
       run: conan install . --output-folder build --build=missing -c tools.cmake.cmaketoolchain:generator=Ninja --format=json > graph.json
