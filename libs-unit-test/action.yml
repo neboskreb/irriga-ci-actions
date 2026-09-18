@@ -37,7 +37,7 @@ runs:
           ${{ runner.os }}-conan2-${{ inputs.working-directory }}-
 
     - name: Conan install
-      run: conan install . --output-folder build --build=missing -c tools.cmake.cmaketoolchain:generator=Ninja --format=json > graph.json
+      run: conan install . --build=missing -c tools.cmake.cmaketoolchain:generator="Unix Makefiles" --format=json > graph.json
       working-directory: ${{inputs.working-directory}}
       shell: bash
 
@@ -57,7 +57,14 @@ runs:
       shell: bash
 
     - name: CMake install
-      run: cmake -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" . -B cmake-build-release
+      run: |
+        echo "=== Directory Tree ==="
+        find . -maxdepth 5 -not -path '*/.*'
+        echo "=== CMakeUserPresets.json ==="
+        cat CMakeUserPresets.json || echo "Not found"
+        echo "=== build/Release/generators/CMakePresets.json ==="
+        cat build/Release/generators/CMakePresets.json || echo "Not found"
+        cmake --preset conan-release . -B cmake-build-release
       working-directory: ${{inputs.working-directory}}
       shell: bash
 
