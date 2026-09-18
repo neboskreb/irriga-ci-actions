@@ -38,3 +38,25 @@ runs:
         conan upload ${{env.library}} -r neboskreb-snapshots --force
         conan remove "*/*#!latest" -c -r neboskreb-snapshots
       shell: bash
+
+    - name: Inspect Conan cache
+      if: always()
+      run: |
+        set -euxo pipefail
+        
+        echo "Conan home: ${CONAN_HOME:-$HOME/.conan2}"
+        
+        echo "Matching cache paths:"
+        find "${CONAN_HOME:-$HOME/.conan2}" \
+          \( -iname '*avr*library*base*' \
+             -o -iname '*avr*toolchain*helpers*' \) \
+          -print 2>/dev/null || true
+        
+        echo "All CMake helper files:"
+        find "${CONAN_HOME:-$HOME/.conan2}" \
+          -type f -path '*/cmake/*' -print 2>/dev/null || true
+        
+        echo "Relevant files containing the helper name:"
+        grep -RIl "avr-toolchain-helpers" \
+          "${CONAN_HOME:-$HOME/.conan2}" 2>/dev/null || true
+      shell: bash
