@@ -15,18 +15,6 @@ inputs:
 runs:
     using: 'composite'
     steps:
-    - name: Detect CMake and Conan scripts
-      run: |
-        chmod +x ${{github.action_path}}/detect-executable.sh
-        ${{github.action_path}}/detect-executable.sh ${{inputs.working-directory}} >> "$GITHUB_ENV"
-      shell: bash
-
-    - name: Assert info detected
-      if: ${{env.cmake_found != 'True' || env.conan_found != 'True' || env.executable == ''}}
-      uses: actions/github-script@v9
-      with:
-        script: core.setFailed('Executable not detected in CMakeLists.txt, or CMakeLists.txt is missing, or conanfile is missing')
-
     - name: Cache Conan packages
       if: inputs.use-cache == 'True'
       uses: actions/cache@v6
@@ -56,25 +44,62 @@ runs:
       working-directory: ${{inputs.working-directory}}
       shell: bash
 
-    - name: CMake install
+    - name: CMake configure
       run: |
-        echo "=== Directory Tree ==="
-        find . -maxdepth 5 -not -path '*/.*'
-        echo "=== CMakeUserPresets.json ==="
-        cat CMakeUserPresets.json || echo "Not found"
-        echo "=== build/Release/generators/CMakePresets.json ==="
-        cat build/Release/generators/CMakePresets.json || echo "Not found"
-        cmake --preset conan-release . -B cmake-build-release
+        # According to the Preset, binaryDir is explicitly build/Release
+        # Create the CMake File API query inside the configured binaryDir BEFORE running configure
+        mkdir -p build/Release/.cmake/api/v1/query
+        printf '{"requests":[{"kind":"codemodel","version":2}]}' > build/Release/.cmake/api/v1/query/codemodel-v2
+        # We need to run from the root where CMakeUserPresets.json is, but conan-release forces the build folder to build/Release
+        cmake --preset conan-release
       working-directory: ${{inputs.working-directory}}
       shell: bash
 
     - name: CMake build
-      run: cmake  --build ./cmake-build-release
+      run: cmake --build build/Release
+      working-directory: ${{inputs.working-directory}}
+      shell: bash
+
+    - name: Locate executable from CMake target
+      run: |
+        set -euo pipefail
+        
+        reply_dir="build/Release/.cmake/api/v1/reply"
+        index_file="$(find "$reply_dir" -name 'index-*.json' -print -quit)"
+        
+        if [ -z "$index_file" ]; then
+          echo "FATAL: CMake File API index was not generated" >&2
+          exit 1
+        fi
+        
+        codemodel_file="$reply_dir/$(jq -r '.reply["codemodel-v2"].jsonFile' "$index_file")"
+        
+        # Search for the first EXECUTABLE target in the codemodel
+        executable_rel_path="$(
+          jq -r '.configurations[0].targets[].jsonFile' "$codemodel_file" | while read -r target_file; do
+            target_json="$reply_dir/$target_file"
+            if [ "$(jq -r '.type' "$target_json")" = "EXECUTABLE" ]; then
+              jq -r '.artifacts[0].path' "$target_json"
+              break
+            fi
+          done
+        )"
+        
+        if [ -z "$executable_rel_path" ]; then
+          echo "FATAL: No executable target found in CMake codemodel" >&2
+          exit 1
+        fi
+        
+        # The artifact path inside the target JSON is relative to the binaryDir (build/Release)
+        EXECUTABLE_PATH="build/Release/$executable_rel_path"
+        
+        echo "INFO: Detected executable at: $EXECUTABLE_PATH" >&2
+        echo "executable=$EXECUTABLE_PATH" >> "$GITHUB_ENV"
       working-directory: ${{inputs.working-directory}}
       shell: bash
 
     - name: Run tests
-      run: ./cmake-build-release/${{env.executable}} --gtest_output="xml:./cmake-build-release/gtest-report.xml"
+      run: ${{env.executable}} --gtest_output="xml:./build/Release/gtest-report.xml"
       working-directory: ${{inputs.working-directory}}
       shell: bash
 
