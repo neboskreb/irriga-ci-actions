@@ -20,11 +20,6 @@ runs:
       with:
         script: core.setFailed('Library not detected in conanfile, or CMakeLists.txt is missing, or conanfile is missing')
 
-    - name: Conan create
-      run: conan create .
-      working-directory: ${{inputs.working-directory}}
-      shell: bash
-
     - name: Conan upload to the production repo
       if: ${{env.is_snapshot == 'False'}}
       run: conan upload ${{env.library}} -r neboskreb-conan
