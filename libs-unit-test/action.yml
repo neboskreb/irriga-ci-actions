@@ -45,7 +45,10 @@ runs:
       shell: bash
 
     - name: Conan create
-      run: conan create .
+      run: |
+        echo "[runenv]
+        GTEST_OUTPUT=xml:/github/home/test-results/gtest-report.xml" > gtest-env.profile
+        conan create . -pr:h=default -pr:h=gtest-env.profile
       working-directory: ${{inputs.working-directory}}
       shell: bash
 
@@ -54,5 +57,5 @@ runs:
       uses: EnricoMi/publish-unit-test-result-action@v2
       if: always() # always run even if the previous step fails
       with:
-        files: '**/gtest-report.xml'
+        files: "/github/home/test-results/gtest-report.xml"
         check_name: ${{inputs.check_name}}
