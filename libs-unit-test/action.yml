@@ -46,6 +46,9 @@ runs:
 
     - name: Conan create
       run: conan create .
+      env:
+        CONAN_TEST_RESULTS_DIR: ${{ github.workspace }}/test-results
+        GTEST_OUTPUT: "xml:${{ github.workspace }}/test-results/"
       working-directory: ${{inputs.working-directory}}
       shell: bash
 
@@ -54,5 +57,5 @@ runs:
       uses: EnricoMi/publish-unit-test-result-action@v2
       if: always() # always run even if the previous step fails
       with:
-        files: '**/gtest-report.xml'
+        files: "xml:${{ github.workspace }}/test-results/"
         check_name: ${{inputs.check_name}}
