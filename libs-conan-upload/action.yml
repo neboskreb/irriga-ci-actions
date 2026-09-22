@@ -11,14 +11,28 @@ runs:
     - name: Detect CMake and Conan scripts
       run: |
         chmod +x ${{github.action_path}}/detect-library.sh
-        ${{github.action_path}}/detect-library.sh ${{inputs.working-directory}} >> "$GITHUB_ENV"
+        # Suspend the instant error handling, execute the script, and re-enable the error handling
+        set +e
+        OUTPUT=$(${{github.action_path}}/detect-library.sh ${{inputs.working-directory}} conanfile-test.py)
+        EXIT_CODE=$?
+        set -e
+        
+        # Handle non-zero exit codes (guard clause)
+        if [ $EXIT_CODE -ne 0 ]; then
+          case $EXIT_CODE in
+            1) echo "::error::Working directory not found: ${{inputs.working-directory}}" ;;
+            2) echo "::error::Conan file not found." ;;
+            3) echo "::error::Command 'conan inspect' failed." ;;
+            4) echo "::error::Library name not detected via conan inspect." ;;
+            5) echo "::error::Library version not detected via conan inspect." ;;
+            *) echo "::error::An unexpected error occurred (Exit code: $EXIT_CODE)." ;;
+          esac
+          exit $EXIT_CODE
+        fi
+
+        echo "$OUTPUT" >> "$GITHUB_ENV"
       shell: bash
 
-    - name: Assert info detected
-      if: ${{env.cmake_found != 'True' || env.conan_found != 'True' || env.library == '' || (env.is_snapshot != 'True' && env.is_snapshot != 'False')}}
-      uses: actions/github-script@v9
-      with:
-        script: core.setFailed('Library not detected in conanfile, or CMakeLists.txt is missing, or conanfile is missing')
 
     - name: Conan upload to the production repo
       if: ${{env.is_snapshot == 'False'}}
