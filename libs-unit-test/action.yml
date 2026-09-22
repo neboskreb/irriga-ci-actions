@@ -25,7 +25,7 @@ runs:
           ${{ runner.os }}-conan2-${{ inputs.working-directory }}-
 
     - name: Conan install
-      run: conan install . --build=missing -c tools.cmake.cmaketoolchain:generator="Unix Makefiles" --format=json > graph.json
+      run: conan install conanfile-test.py --build=missing -c tools.cmake.cmaketoolchain:generator="Unix Makefiles" --format=json > graph.json
       working-directory: ${{inputs.working-directory}}
       shell: bash
 
@@ -48,7 +48,7 @@ runs:
       run: |
         echo "[runenv]
         GTEST_OUTPUT=xml:/github/home/test-results/gtest-report.xml" > gtest-env.profile
-        conan create . -pr:h=default -pr:h=gtest-env.profile
+        conan create conanfile-test.py -pr:h=default -pr:h=gtest-env.profile
       working-directory: ${{inputs.working-directory}}
       shell: bash
 
