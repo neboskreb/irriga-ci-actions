@@ -13,7 +13,7 @@ runs:
         chmod +x ${{github.action_path}}/detect-library.sh
         # Suspend the instant error handling, execute the script, and re-enable the error handling
         set +e
-        OUTPUT=$(${{github.action_path}}/detect-library.sh ${{inputs.working-directory}} conanfile-test.py)
+        OUTPUT=$(${{github.action_path}}/detect-library.sh ${{inputs.working-directory}} conanfile.py)
         EXIT_CODE=$?
         set -e
         
