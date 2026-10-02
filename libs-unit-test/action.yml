@@ -7,6 +7,10 @@ inputs:
   check_name:
     required: true
     description: Name which is displayed in test results
+  is_application:
+    required: false
+    default: 'False'
+    description: Is the target a library or an application
   use-cache:
     required: false
     default: 'True'
@@ -44,11 +48,24 @@ runs:
       working-directory: ${{inputs.working-directory}}
       shell: bash
 
-    - name: Conan create
+    - name: Conan enable GTest output
       run: |
         echo "[runenv]
         GTEST_OUTPUT=xml:/github/home/test-results/gtest-report.xml" > gtest-env.profile
+      working-directory: ${{inputs.working-directory}}
+      shell: bash
+
+    - name: Conan create & test library
+      if: inputs.is_application == 'False'
+      run: |
         conan create . -pr:h=default -pr:h=gtest-env.profile
+      working-directory: ${{inputs.working-directory}}
+      shell: bash
+
+    - name: Conan build & test the application
+      if: inputs.is_application == 'True'
+      run: |
+        conan build . -pr:h=default -pr:h=gtest-env.profile
       working-directory: ${{inputs.working-directory}}
       shell: bash
 
