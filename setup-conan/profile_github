@@ -8,7 +8,7 @@ compiler.cppstd=gnu17
 build_type=Release
 
 [conf]
-tools.cmake.cmaketoolchain:generator=Ninja
+tools.cmake.cmaketoolchain:generator=Unix Makefiles
 
 [options]
 *:shared=False
