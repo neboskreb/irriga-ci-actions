@@ -11,6 +11,10 @@ inputs:
     required: false
     default: 'False'
     description: Is the target a library or an application
+  test_only:
+    required: false
+    default: 'False'
+    description: Set this to True for libraries which produce no deliverables for GitHub CI
   use-cache:
     required: false
     default: 'True'
@@ -56,14 +60,14 @@ runs:
       shell: bash
 
     - name: Conan create & test library
-      if: inputs.is_application == 'False'
+      if: inputs.is_application == 'False' && inputs.test_only == 'False'
       run: |
         conan create . -pr:h=default -pr:h=gtest-env.profile
       working-directory: ${{inputs.working-directory}}
       shell: bash
 
     - name: Conan build & test the application
-      if: inputs.is_application == 'True'
+      if: inputs.is_application == 'True' || inputs.test_only == 'True'
       run: |
         conan build . -pr:h=default -pr:h=gtest-env.profile
       working-directory: ${{inputs.working-directory}}
